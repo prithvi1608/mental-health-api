@@ -4,7 +4,7 @@ import os
 app = Flask(__name__)
 
 def classify(msg):
-    msg = msg.lower()
+    msg = str(msg).lower().strip()
 
     if any(x in msg for x in ["suicide", "kill myself", "want to die", "hurt myself", "self harm"]):
         return "urgent_help"
@@ -29,24 +29,30 @@ def home():
 
 @app.route("/classify", methods=["POST"])
 def classify_api():
-    data = request.get_json(silent=True) or {}
-    message = data.get("message", "")
+    try:
+        data = request.get_json(silent=True) or {}
+        message = str(data.get("message", "")).strip()
 
-    category = classify(message)
+        category = classify(message)
 
-    replies = {
-        "stressed": "It sounds like you're feeling stressed. Let's slow things down.",
-        "anxious": "It sounds like you're feeling anxious. Take a deep breath with me.",
-        "sad": "I'm sorry you're feeling this way. You're not alone.",
-        "overwhelmed": "It sounds like things feel like too much right now. Let's take one step at a time.",
-        "motivation": "It seems like you're struggling with motivation. Starting small is okay.",
-        "urgent_help": "It sounds serious. Please reach out to emergency support or someone you trust right now."
-    }
+        replies = {
+            "stressed": "It sounds like you're feeling stressed. Let's slow things down.",
+            "anxious": "It sounds like you're feeling anxious. Take a deep breath with me.",
+            "sad": "I'm sorry you're feeling this way. You're not alone.",
+            "overwhelmed": "It sounds like things feel like too much right now. Let's take one step at a time.",
+            "motivation": "It seems like you're struggling with motivation. Starting small is okay.",
+            "urgent_help": "It sounds serious. Please reach out to emergency support or someone you trust right now."
+        }
 
-    return jsonify({
-        "category": category,
-        "reply": replies[category]
-    })
+        return jsonify({
+            "category": category,
+            "reply": replies[category]
+        })
+
+    except Exception as e:
+        return jsonify({
+            "error": str(e)
+        }), 500
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
